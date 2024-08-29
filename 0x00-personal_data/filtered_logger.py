@@ -27,6 +27,7 @@ def filter_datum(fields: List[str], redaction: str,
                          field+'='+redaction+separator, message)
     return message
 
+
 class RedactingFormatter(logging.Formatter):
     """ Redacting Formatter class
         """
@@ -41,7 +42,7 @@ class RedactingFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         """
-        Redact the message of LogRecord instance
+        redact the message of LogRecord instance
         Args:
         record (logging.LogRecord): LogRecord instance containing message
         Return:
@@ -72,7 +73,6 @@ def get_logger() -> logging.Logger:
 
 def get_db() -> mysql.connector.connection.MySQLConnection:
     """
-    Return a MySQL database connection object
     """
     user = os.getenv('PERSONAL_DATA_DB_USERNAME') or "root"
     passwd = os.getenv('PERSONAL_DATA_DB_PASSWORD') or ""
@@ -84,3 +84,22 @@ def get_db() -> mysql.connector.connection.MySQLConnection:
                                    database=db_name)
     return conn
 
+
+def main():
+    """
+    main entry point
+    """
+    db = get_db()
+    logger = get_logger()
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM users;")
+    fields = cursor.column_names
+    for row in cursor:
+        message = "".join("{}={}; ".format(k, v) for k, v in zip(fields, row))
+        logger.info(message.strip())
+    cursor.close()
+    db.close()
+
+
+if __name__ == "__main__":
+    main()
